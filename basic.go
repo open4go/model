@@ -12,11 +12,11 @@ import (
 // MetaModel 元模型
 type MetaModel struct {
 	// 上下文
-	Context context.Context `json:"context" bson:"-"`
+	Context context.Context `json:"-" bson:"-"`
 	// 数据库
-	Handler *mongo.Database `json:"handler" bson:"-"`
+	Handler *mongo.Database `json:"-" bson:"-"`
 	// 表名称
-	Collection string `json:"collection" bson:"-"`
+	Collection string `json:"-" bson:"-"`
 	// 商户号
 	MerchantID string `json:"merchant_id" bson:"merchant_id"`
 	// 创建者
