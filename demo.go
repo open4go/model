@@ -18,8 +18,11 @@ type DemoModel struct {
 
 func Demo() {
 	d := &DemoModel{}
+	d.Name = "i am demo"
+	d.Desc = "i am desc"
+
 	m := d.Init(context.TODO(), db.MDB, "demo")
-	s, err := m.Create()
+	s, err := m.Create(d)
 	if err != nil {
 		panic(err)
 	}
