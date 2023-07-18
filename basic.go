@@ -97,6 +97,17 @@ func (m *Model) GetOne(d interface{}, id string) error {
 	return nil
 }
 
+// GetBy 通过自定义查询字段
+// getOne	GET http://my.api.url/posts/123
+func (m *Model) GetBy(d interface{}, filter interface{}) error {
+	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	err := coll.FindOne(m.Meta.Context, filter).Decode(d)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Update 更新
 // update	PUT http://my.api.url/posts/123
 func (m *Model) Update(d interface{}, id string) error {
