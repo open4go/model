@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -142,6 +143,33 @@ func (m *Model) GetList(filter interface{}, d interface{}) (int64, error) {
 	}
 	// 获取数据列表
 	cursor, err := coll.Find(m.Meta.Context, filter)
+	if err == mongo.ErrNoDocuments {
+		return totalCounter, err
+	}
+
+	if err != nil {
+		return totalCounter, err
+	}
+
+	if err = cursor.All(context.TODO(), d); err != nil {
+		return totalCounter, err
+	}
+	return totalCounter, nil
+}
+
+// GetListWithOpt 获取列表
+// GetListWithOpt	GET http://my.api.url/posts?sort=["title","ASC"]&range=[0, 24]&filter={"title":"bar"}
+func (m *Model) GetListWithOpt(filter interface{}, d interface{}, opt *options.FindOptions) (int64, error) {
+	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	// 声明需要返回的列表
+	//results := make([]*Model, 0)
+	// 获取总数（含过滤规则）
+	totalCounter, err := coll.CountDocuments(context.TODO(), filter)
+	if err == mongo.ErrNoDocuments {
+		return 0, err
+	}
+	// 获取数据列表
+	cursor, err := coll.Find(m.Meta.Context, filter, opt)
 	if err == mongo.ErrNoDocuments {
 		return totalCounter, err
 	}
