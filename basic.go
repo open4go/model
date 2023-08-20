@@ -46,6 +46,15 @@ func (m *Model) Init(ctx context.Context, handler *mongo.Database, name string) 
 	return m
 }
 
+// NewModel 创建新模型
+func NewModel(ctx context.Context, handler *mongo.Database, name string) *Model {
+	m := &Model{}
+	m.Meta.Context = ctx
+	m.Meta.Handler = handler
+	m.Meta.Collection = name
+	return m
+}
+
 // Create 创建
 func (m *Model) Create(d interface{}) (string, error) {
 	// 保存时间设定
