@@ -12,12 +12,6 @@ import (
 
 // MetaModel 元模型
 type MetaModel struct {
-	// 上下文
-	Context context.Context `json:"-" bson:"-"`
-	// 数据库
-	Handler *mongo.Database `json:"-" bson:"-"`
-	// 表名称
-	Collection string `json:"-" bson:"-"`
 	// 商户号
 	MerchantID string `json:"merchant_id" bson:"merchant_id"`
 	// 创建者
@@ -32,26 +26,49 @@ type MetaModel struct {
 	AccessLevel uint `json:"access_level" bson:"access_level"`
 }
 
+type MetaContext struct {
+	// 上下文
+	Context context.Context `json:"-" bson:"-"`
+	// 数据库
+	Handler *mongo.Database `json:"-" bson:"-"`
+	// 表名称
+	Collection string `json:"-" bson:"-"`
+}
+
 // Model 模型
 type Model struct {
 	// 基本的数据库模型字段，一般情况所有model都应该包含如下字段
 	Meta MetaModel `json:"meta" bson:"meta"`
+	// 基本的数据库模型字段，一般情况所有model都应该包含如下字段
+	Context MetaContext `json:"context" bson:"context"`
 }
 
 // Init 设置名称
+// 当需要执行父类方法时可以直接使用返回的handler完成调用
+// 例如:
+// handler := m.Init(c.Request.Context(), store.MongoDatabase, m.CollectionName())
+// handler.Create(m)
+// 如果用户希望执行自己定义的特殊的method则需要进行handler context 复制以便进行子类方法的运行
+//
+//	handler := m.Init(c.Request.Context(), store.MongoDatabase, m.CollectionName())
+//	m.Meta = handler.Meta
+//	_, err := m.GetListDesc(bson.D{
+//		{Key: "basic.meta.account_id", Value: accountID},
+//		{"order.status", bson.D{{"$lte", 4}}},
+//	}, &menuList)
 func (m *Model) Init(ctx context.Context, handler *mongo.Database, name string) *Model {
-	m.Meta.Context = ctx
-	m.Meta.Handler = handler
-	m.Meta.Collection = name
+	m.Context.Context = ctx
+	m.Context.Handler = handler
+	m.Context.Collection = name
 	return m
 }
 
 // NewModel 创建新模型
 func NewModel(ctx context.Context, handler *mongo.Database, name string) *Model {
 	m := &Model{}
-	m.Meta.Context = ctx
-	m.Meta.Handler = handler
-	m.Meta.Collection = name
+	m.Context.Context = ctx
+	m.Context.Handler = handler
+	m.Context.Collection = name
 	return m
 }
 
@@ -62,9 +79,9 @@ func (m *Model) Create(d interface{}) (string, error) {
 	// 更新时间设定
 	m.Meta.UpdatedAt = rtime.FomratTimeAsReader(time.Now().Unix())
 
-	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	coll := m.Context.Handler.Collection(m.Context.Collection)
 	// 插入记录
-	result, err := coll.InsertOne(m.Meta.Context, d)
+	result, err := coll.InsertOne(m.Context.Context, d)
 	if err != nil {
 		return "", err
 	}
@@ -78,11 +95,11 @@ func (m *Model) Delete(id string) error {
 	// 更新时间设定
 	m.Meta.UpdatedAt = rtime.FomratTimeAsReader(time.Now().Unix())
 
-	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.D{{Key: "_id", Value: objID}}
 	// 执行删除
-	result, err := coll.DeleteOne(m.Meta.Context, filter)
+	result, err := coll.DeleteOne(m.Context.Context, filter)
 
 	if err != nil {
 		return err
@@ -97,10 +114,10 @@ func (m *Model) Delete(id string) error {
 // GetOne 详情
 // getOne	GET http://my.api.url/posts/123
 func (m *Model) GetOne(d interface{}, id string) error {
-	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.D{{Key: "_id", Value: objID}}
-	err := coll.FindOne(m.Meta.Context, filter).Decode(d)
+	err := coll.FindOne(m.Context.Context, filter).Decode(d)
 	if err != nil {
 		return err
 	}
@@ -110,8 +127,8 @@ func (m *Model) GetOne(d interface{}, id string) error {
 // GetBy 通过自定义查询字段
 // getOne	GET http://my.api.url/posts/123
 func (m *Model) GetBy(d interface{}, filter interface{}) error {
-	coll := m.Meta.Handler.Collection(m.Meta.Collection)
-	err := coll.FindOne(m.Meta.Context, filter).Decode(d)
+	coll := m.Context.Handler.Collection(m.Context.Collection)
+	err := coll.FindOne(m.Context.Context, filter).Decode(d)
 	if err != nil {
 		return err
 	}
@@ -119,15 +136,15 @@ func (m *Model) GetBy(d interface{}, filter interface{}) error {
 }
 
 // Update 更新
-// update	PUT http://my.api.url/posts/123
+// update PUT http://my.api.url/posts/123
 func (m *Model) Update(d interface{}, id string) error {
-	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.D{{Key: "_id", Value: objID}}
 	// 设定更新时间
 	m.Meta.UpdatedAt = rtime.FomratTimeAsReader(time.Now().Unix())
 
-	result, err := coll.UpdateOne(m.Meta.Context, filter, bson.D{{Key: "$set", Value: d}})
+	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{{Key: "$set", Value: d}})
 	if err != nil {
 		return err
 	}
@@ -135,14 +152,13 @@ func (m *Model) Update(d interface{}, id string) error {
 	if result.MatchedCount < 1 {
 		return err
 	}
-
 	return nil
 }
 
 // GetList 获取列表
 // getList	GET http://my.api.url/posts?sort=["title","ASC"]&range=[0, 24]&filter={"title":"bar"}
 func (m *Model) GetList(filter interface{}, d interface{}) (int64, error) {
-	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	coll := m.Context.Handler.Collection(m.Context.Collection)
 	// 声明需要返回的列表
 	//results := make([]*Model, 0)
 	// 获取总数（含过滤规则）
@@ -151,7 +167,7 @@ func (m *Model) GetList(filter interface{}, d interface{}) (int64, error) {
 		return 0, err
 	}
 	// 获取数据列表
-	cursor, err := coll.Find(m.Meta.Context, filter)
+	cursor, err := coll.Find(m.Context.Context, filter)
 	if err == mongo.ErrNoDocuments {
 		return totalCounter, err
 	}
@@ -169,7 +185,7 @@ func (m *Model) GetList(filter interface{}, d interface{}) (int64, error) {
 // GetListWithOpt 获取列表
 // GetListWithOpt	GET http://my.api.url/posts?sort=["title","ASC"]&range=[0, 24]&filter={"title":"bar"}
 func (m *Model) GetListWithOpt(filter interface{}, d interface{}, opt *options.FindOptions) (int64, error) {
-	coll := m.Meta.Handler.Collection(m.Meta.Collection)
+	coll := m.Context.Handler.Collection(m.Context.Collection)
 	// 声明需要返回的列表
 	//results := make([]*Model, 0)
 	// 获取总数（含过滤规则）
@@ -178,7 +194,7 @@ func (m *Model) GetListWithOpt(filter interface{}, d interface{}, opt *options.F
 		return 0, err
 	}
 	// 获取数据列表
-	cursor, err := coll.Find(m.Meta.Context, filter, opt)
+	cursor, err := coll.Find(m.Context.Context, filter, opt)
 	if err == mongo.ErrNoDocuments {
 		return totalCounter, err
 	}
