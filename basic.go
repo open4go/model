@@ -82,7 +82,6 @@ func (m *Model) Init(ctx context.Context, handler *mongo.Database, name string) 
 	m.Context.Context = ctx
 	m.Context.Handler = handler
 	m.Context.Collection = name
-	m.Meta = m.GetMeta()
 	return m
 }
 
@@ -120,6 +119,7 @@ func (m *Model) GetMeta() MetaModel {
 
 // Create 创建
 func (m *Model) Create(d interface{}) (string, error) {
+	m.Meta = m.GetMeta()
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	log.Log().WithField("data", d).Debug("before insert into database")
 	// 插入记录
