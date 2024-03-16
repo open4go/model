@@ -56,11 +56,6 @@ type MetaContext struct {
 	Collection string `json:"-" bson:"-"`
 }
 
-// CopyMeta copies the meta data from src to dest
-func CopyMeta(src, dest *Model) {
-	dest.Meta = src.Meta
-}
-
 // Model 模型
 type Model struct {
 	// 基本的数据库模型字段，一般情况所有model都应该包含如下字段
@@ -98,6 +93,29 @@ func NewModel(ctx context.Context, handler *mongo.Database, name string) *Model 
 	return m
 }
 
+// GetMeta 创建
+func (m *Model) GetMeta() MetaModel {
+	// 保存时间
+	m.Meta.CreatedTime = time.Now().Unix()
+	// 更新时间
+	m.Meta.UpdatedTime = time.Now().Unix()
+	// 创建时间
+	m.Meta.CreatedAt = r3time.CurrentTime()
+	// 更新时间
+	m.Meta.UpdatedAt = r3time.CurrentTime()
+	// 命名空间
+	m.Meta.Namespace = GetValueFromCtx(m.Context.Context, NamespaceKey)
+	// 商户
+	m.Meta.MerchantID = GetValueFromCtx(m.Context.Context, MerchantKey)
+	// 数据操作所属人
+	m.Meta.AccountID = GetValueFromCtx(m.Context.Context, AccountKey)
+	// 创建人
+	m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
+	// 更新人
+	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
+	return m.Meta
+}
+
 // Create 创建
 func (m *Model) Create(d interface{}) (string, error) {
 	// 保存时间
@@ -118,9 +136,6 @@ func (m *Model) Create(d interface{}) (string, error) {
 	m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
 	// 更新人
 	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
-
-	// Copy meta data from context
-	CopyMeta(m, d.(*Model))
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	// 插入记录
