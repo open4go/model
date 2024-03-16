@@ -120,25 +120,6 @@ func (m *Model) GetMeta() MetaModel {
 
 // Create 创建
 func (m *Model) Create(d interface{}) (string, error) {
-	//// 保存时间
-	//m.Meta.CreatedTime = time.Now().Unix()
-	//// 更新时间
-	//m.Meta.UpdatedTime = time.Now().Unix()
-	//// 创建时间
-	//m.Meta.CreatedAt = r3time.CurrentTime()
-	//// 更新时间
-	//m.Meta.UpdatedAt = r3time.CurrentTime()
-	//// 命名空间
-	//m.Meta.Namespace = GetValueFromCtx(m.Context.Context, NamespaceKey)
-	//// 商户
-	//m.Meta.MerchantID = GetValueFromCtx(m.Context.Context, MerchantKey)
-	//// 数据操作所属人
-	//m.Meta.AccountID = GetValueFromCtx(m.Context.Context, AccountKey)
-	//// 创建人
-	//m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
-	//// 更新人
-	//m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
-
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	log.Log().WithField("data", d).Debug("before insert into database")
 	// 插入记录
@@ -216,6 +197,22 @@ func (m *Model) Update(d interface{}, id string) error {
 	}
 
 	if result.MatchedCount < 1 {
+		return err
+	}
+
+	updatePayload := bson.M{
+		"$set": bson.M{
+			"_.meta.updater":      GetValueFromCtx(m.Context.Context, OperatorKey), // 要更新的字段及其值
+			"_.meta.updated_at":   r3time.CurrentTime(),                            // 要更新的字段及其值
+			"_.meta.updated_time": time.Now().Unix(),                               // 要更新的字段及其值
+		},
+	}
+
+	result2, err := coll.UpdateOne(m.Context.Context, filter, updatePayload)
+	if err != nil {
+		return err
+	}
+	if result2.MatchedCount < 1 {
 		return err
 	}
 	return nil
