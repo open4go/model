@@ -120,24 +120,24 @@ func (m *Model) GetMeta() MetaModel {
 
 // Create 创建
 func (m *Model) Create(d interface{}) (string, error) {
-	// 保存时间
-	m.Meta.CreatedTime = time.Now().Unix()
-	// 更新时间
-	m.Meta.UpdatedTime = time.Now().Unix()
-	// 创建时间
-	m.Meta.CreatedAt = r3time.CurrentTime()
-	// 更新时间
-	m.Meta.UpdatedAt = r3time.CurrentTime()
-	// 命名空间
-	m.Meta.Namespace = GetValueFromCtx(m.Context.Context, NamespaceKey)
-	// 商户
-	m.Meta.MerchantID = GetValueFromCtx(m.Context.Context, MerchantKey)
-	// 数据操作所属人
-	m.Meta.AccountID = GetValueFromCtx(m.Context.Context, AccountKey)
-	// 创建人
-	m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
-	// 更新人
-	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
+	//// 保存时间
+	//m.Meta.CreatedTime = time.Now().Unix()
+	//// 更新时间
+	//m.Meta.UpdatedTime = time.Now().Unix()
+	//// 创建时间
+	//m.Meta.CreatedAt = r3time.CurrentTime()
+	//// 更新时间
+	//m.Meta.UpdatedAt = r3time.CurrentTime()
+	//// 命名空间
+	//m.Meta.Namespace = GetValueFromCtx(m.Context.Context, NamespaceKey)
+	//// 商户
+	//m.Meta.MerchantID = GetValueFromCtx(m.Context.Context, MerchantKey)
+	//// 数据操作所属人
+	//m.Meta.AccountID = GetValueFromCtx(m.Context.Context, AccountKey)
+	//// 创建人
+	//m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
+	//// 更新人
+	//m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	log.Log().WithField("data", d).Debug("before insert into database")

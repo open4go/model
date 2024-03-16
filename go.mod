@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/open4go/log v0.0.8
-	github.com/open4go/r3time v0.0.2
+	github.com/open4go/r3time v0.0.3
 	github.com/r2day/base v1.6.7
 	github.com/r2day/db v0.3.5
 	go.mongodb.org/mongo-driver v1.12.0
