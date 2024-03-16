@@ -202,9 +202,9 @@ func (m *Model) Update(d interface{}, id string) error {
 
 	updatePayload := bson.M{
 		"$set": bson.M{
-			"_.meta.updater":      GetValueFromCtx(m.Context.Context, OperatorKey), // 要更新的字段及其值
-			"_.meta.updated_at":   r3time.CurrentTime(),                            // 要更新的字段及其值
-			"_.meta.updated_time": time.Now().Unix(),                               // 要更新的字段及其值
+			"meta.updater":      GetValueFromCtx(m.Context.Context, OperatorKey), // 要更新的字段及其值
+			"meta.updated_at":   r3time.CurrentTime(),                            // 要更新的字段及其值
+			"meta.updated_time": time.Now().Unix(),                               // 要更新的字段及其值
 		},
 	}
 
