@@ -81,6 +81,7 @@ func (m *Model) Init(ctx context.Context, handler *mongo.Database, name string) 
 	m.Context.Context = ctx
 	m.Context.Handler = handler
 	m.Context.Collection = name
+	m.Meta = m.GetMeta()
 	return m
 }
 
