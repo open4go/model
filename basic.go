@@ -56,6 +56,11 @@ type MetaContext struct {
 	Collection string `json:"-" bson:"-"`
 }
 
+// CopyMeta copies the meta data from src to dest
+func CopyMeta(src, dest *Model) {
+	dest.Meta = src.Meta
+}
+
 // Model 模型
 type Model struct {
 	// 基本的数据库模型字段，一般情况所有model都应该包含如下字段
@@ -113,6 +118,9 @@ func (m *Model) Create(d interface{}) (string, error) {
 	m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
 	// 更新人
 	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
+
+	// Copy meta data from context
+	CopyMeta(m, d.(*Model))
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	// 插入记录
