@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"github.com/open4go/log"
 	"github.com/open4go/r3time"
 	rtime "github.com/r2day/base/time"
 	"go.mongodb.org/mongo-driver/bson"
@@ -139,6 +140,7 @@ func (m *Model) Create(d interface{}) (string, error) {
 	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
+	log.Log().WithField("data", d).Debug("before insert into database")
 	// 插入记录
 	result, err := coll.InsertOne(m.Context.Context, d)
 	if err != nil {
