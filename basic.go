@@ -121,7 +121,7 @@ func (m *Model) GetMeta() MetaModel {
 func (m *Model) Create(d interface{}) (string, error) {
 	m.Meta = m.GetMeta()
 	coll := m.Context.Handler.Collection(m.Context.Collection)
-	log.Log().WithField("data", d).Debug("before insert into database")
+	log.Log(m.Context.Context).WithField("data", d).Debug("before insert into database")
 	// 插入记录
 	result, err := coll.InsertOne(m.Context.Context, d)
 	if err != nil {

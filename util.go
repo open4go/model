@@ -12,11 +12,11 @@ func GetValueFromCtx(ctx context.Context, key string) string {
 
 	// Check if the value is of the expected type
 	if str, ok := value.(string); ok {
-		log.Log().WithField("key", key).WithField("value", str).
+		log.Log(ctx).WithField("key", key).WithField("value", str).
 			Debug("value retrieved from context")
 		return str
 	} else {
-		log.Log().WithField("key", key).Warning("Value not found or not of type string")
+		log.Log(ctx).WithField("key", key).Warning("Value not found or not of type string")
 		return ""
 	}
 }
