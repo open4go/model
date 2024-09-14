@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"github.com/open4go/log"
 )
 
 // GetValueFromCtx 从context中读取值
@@ -12,11 +11,11 @@ func GetValueFromCtx(ctx context.Context, key string) string {
 
 	// Check if the value is of the expected type
 	if str, ok := value.(string); ok {
-		log.Log(ctx).WithField("key", key).WithField("value", str).
-			Debug("value retrieved from context")
+		//log.Log(ctx).WithField("key", key).WithField("value", str).
+		//	Debug("value retrieved from context")
 		return str
 	} else {
-		log.Log(ctx).WithField("key", key).Warning("Value not found or not of type string")
+		//log.Log(ctx).WithField("key", key).Warning("Value not found or not of type string")
 		return ""
 	}
 }
