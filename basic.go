@@ -97,9 +97,9 @@ func NewModel(ctx context.Context, handler *mongo.Database, name string) *Model 
 // GetMeta 创建
 func (m *Model) GetMeta() MetaModel {
 	// 保存时间
-	m.Meta.CreatedTime = time.Now().Unix()
+	m.Meta.CreatedTime = r3time.CurrentTimestamp()
 	// 更新时间
-	m.Meta.UpdatedTime = time.Now().Unix()
+	m.Meta.UpdatedTime = r3time.CurrentTimestamp()
 	// 创建时间
 	m.Meta.CreatedAt = r3time.CurrentTime()
 	// 更新时间
@@ -135,7 +135,7 @@ func (m *Model) Create(d interface{}) (string, error) {
 // delete	DELETE http://my.api.url/posts/123
 func (m *Model) Delete(id string) error {
 	// 更新时间设定
-	m.Meta.UpdatedAt = rtime.FomratTimeAsReader(time.Now().Unix())
+	m.Meta.UpdatedAt = rtime.GetCurrentTime()
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
@@ -204,7 +204,7 @@ func (m *Model) Update(d interface{}, id string) error {
 		"$set": bson.M{
 			"meta.updater":      GetValueFromCtx(m.Context.Context, OperatorKey), // 要更新的字段及其值
 			"meta.updated_at":   r3time.CurrentTime(),                            // 要更新的字段及其值
-			"meta.updated_time": time.Now().Unix(),                               // 要更新的字段及其值
+			"meta.updated_time": r3time.CurrentTimestamp(),                       // 要更新的字段及其值
 		},
 	}
 
@@ -214,6 +214,39 @@ func (m *Model) Update(d interface{}, id string) error {
 	}
 	if result2.MatchedCount < 1 {
 		return err
+	}
+	return nil
+}
+
+func (m *Model) UpdateV2(d bson.M, id string) error {
+	coll := m.Context.Handler.Collection(m.Context.Collection)
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{Key: "_id", Value: objID}}
+
+	// 生成 meta 数据更新内容
+	metaUpdate := bson.M{
+		"meta.updater":      GetValueFromCtx(m.Context.Context, OperatorKey), // 更新人
+		"meta.updated_at":   r3time.CurrentTime(),                            // 可读更新时间
+		"meta.updated_time": r3time.CurrentTimestamp(),                       // 要更新的字段及其值
+	}
+
+	// 合并用户数据和 meta 数据
+	updateData := bson.M{
+		"$set": mergeBsonM(metaUpdate, d),
+	}
+
+	// 执行一次性更新
+	result, err := coll.UpdateOne(m.Context.Context, filter, updateData)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount < 1 {
+		return errors.New("no document matched the filter")
 	}
 	return nil
 }
