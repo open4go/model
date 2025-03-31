@@ -190,7 +190,7 @@ func (m *Model) Update(d interface{}, id string) error {
 	// 更新时间
 	m.Meta.UpdatedAt = r3time.CurrentTime()
 
-	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{{Key: "$set", Value: d}})
+	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{bson.E{Key: "$set", Value: d}})
 	if err != nil {
 		return err
 	}
@@ -328,7 +328,7 @@ func (m *Model) SoftDelete(id string) error {
 	m.Meta.Deleted = true
 
 	// 重新更新
-	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{{"$set", m}})
+	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{bson.E{Key: "$set", Value: m}})
 	if err != nil {
 		return err
 	}
