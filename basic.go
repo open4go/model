@@ -339,3 +339,41 @@ func (m *Model) SoftDelete(id string) error {
 	}
 	return nil
 }
+
+// UpdateMany 批量更新
+// updateMany PUT http://my.api.url/posts
+// 会自动更新操作人与操作时间
+func (m *Model) UpdateMany(filter interface{}, updateData interface{}) error {
+	coll := m.Context.Handler.Collection(m.Context.Collection)
+
+	// 更新人
+	updater := GetValueFromCtx(m.Context.Context, OperatorKey)
+	// 更新时间
+	updatedTime := time.Now().Unix()
+	updatedAt := r3time.CurrentTime()
+
+	// 组装更新数据
+	updatePayload := bson.M{
+		"$set": bson.M{
+			"meta.updater":      updater,
+			"meta.updated_at":   updatedAt,
+			"meta.updated_time": updatedTime,
+		},
+	}
+
+	// 如果传入的 `updateData` 不是 `nil`，合并自定义更新字段
+	if updateData != nil {
+		updatePayload["$set"].(bson.M)["data"] = updateData
+	}
+
+	result, err := coll.UpdateMany(m.Context.Context, filter, updatePayload)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount < 1 {
+		return errors.New("no documents matched the update criteria")
+	}
+
+	return nil
+}
