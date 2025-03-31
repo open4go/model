@@ -138,7 +138,7 @@ func (m *Model) Delete(id string) error {
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{"_id", objID}}
+	filter := bson.D{bson.E{Key: "_id", Value: objID}}
 	// 执行删除q
 	result, err := coll.DeleteOne(m.Context.Context, filter)
 
@@ -157,7 +157,7 @@ func (m *Model) Delete(id string) error {
 func (m *Model) GetOne(d interface{}, id string) error {
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{"_id", objID}}
+	filter := bson.D{bson.E{Key: "_id", Value: objID}}
 	err := coll.FindOne(m.Context.Context, filter).Decode(d)
 	if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (m *Model) GetBy(d interface{}, filter interface{}) error {
 func (m *Model) Update(d interface{}, id string) error {
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{"_id", objID}}
+	filter := bson.D{bson.E{Key: "_id", Value: objID}}
 	// 更新人
 	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
 	// 更新时间
@@ -224,7 +224,7 @@ func (m *Model) UpdateV2(d bson.M, id string) error {
 		return err
 	}
 
-	filter := bson.D{{"_id", objID}}
+	filter := bson.D{bson.E{Key: "_id", Value: objID}}
 
 	// 生成 meta 数据更新内容
 	metaUpdate := bson.M{
@@ -311,7 +311,7 @@ func (m *Model) SoftDelete(id string) error {
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{"_id", objID}}
+	filter := bson.D{bson.E{Key: "_id", Value: objID}}
 	// 查找当前数据库中的真实值
 	err := coll.FindOne(m.Context.Context, filter).Decode(m)
 	if err != nil {
