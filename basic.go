@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/open4go/log"
 	"github.com/open4go/r3time"
-	rtime "github.com/r2day/base/time"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -135,12 +134,12 @@ func (m *Model) Create(d interface{}) (string, error) {
 // delete	DELETE http://my.api.url/posts/123
 func (m *Model) Delete(id string) error {
 	// 更新时间设定
-	m.Meta.UpdatedAt = rtime.GetCurrentTime()
+	m.Meta.UpdatedAt = r3time.CurrentTime()
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{Key: "_id", Value: objID}}
-	// 执行删除
+	filter := bson.D{{"_id", objID}}
+	// 执行删除q
 	result, err := coll.DeleteOne(m.Context.Context, filter)
 
 	if err != nil {
@@ -158,7 +157,7 @@ func (m *Model) Delete(id string) error {
 func (m *Model) GetOne(d interface{}, id string) error {
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{Key: "_id", Value: objID}}
+	filter := bson.D{{"_id", objID}}
 	err := coll.FindOne(m.Context.Context, filter).Decode(d)
 	if err != nil {
 		return err
@@ -183,7 +182,7 @@ func (m *Model) GetBy(d interface{}, filter interface{}) error {
 func (m *Model) Update(d interface{}, id string) error {
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{Key: "_id", Value: objID}}
+	filter := bson.D{{"_id", objID}}
 	// 更新人
 	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
 	// 更新时间
@@ -225,7 +224,7 @@ func (m *Model) UpdateV2(d bson.M, id string) error {
 		return err
 	}
 
-	filter := bson.D{{Key: "_id", Value: objID}}
+	filter := bson.D{{"_id", objID}}
 
 	// 生成 meta 数据更新内容
 	metaUpdate := bson.M{
@@ -312,7 +311,7 @@ func (m *Model) SoftDelete(id string) error {
 
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{Key: "_id", Value: objID}}
+	filter := bson.D{{"_id", objID}}
 	// 查找当前数据库中的真实值
 	err := coll.FindOne(m.Context.Context, filter).Decode(m)
 	if err != nil {
@@ -329,7 +328,7 @@ func (m *Model) SoftDelete(id string) error {
 	m.Meta.Deleted = true
 
 	// 重新更新
-	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{{Key: "$set", Value: m}})
+	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{{"$set", m}})
 	if err != nil {
 		return err
 	}
@@ -349,15 +348,12 @@ func (m *Model) UpdateMany(filter interface{}, updateData interface{}) error {
 	// 更新人
 	updater := GetValueFromCtx(m.Context.Context, OperatorKey)
 	// 更新时间
-	updatedTime := time.Now().Unix()
-	updatedAt := r3time.CurrentTime()
-
 	// 组装更新数据
 	updatePayload := bson.M{
 		"$set": bson.M{
 			"meta.updater":      updater,
-			"meta.updated_at":   updatedAt,
-			"meta.updated_time": updatedTime,
+			"meta.updated_at":   r3time.CurrentTime(),
+			"meta.updated_time": r3time.CurrentTimestamp(),
 		},
 	}
 
