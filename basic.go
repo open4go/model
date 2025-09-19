@@ -13,16 +13,19 @@ import (
 )
 
 const (
-	AccountKey   = "ACCOUNT_KEY"
-	MerchantKey  = "MERCHANT_KEY"
-	NamespaceKey = "NAME_SPACE_KEY"
-	OperatorKey  = "OPERATOR_KEY"
+	AccountKey     = "ACCOUNT_KEY"
+	MerchantKey    = "MERCHANT_KEY"
+	NamespaceKey   = "NAME_SPACE_KEY"
+	OperatorKey    = "OPERATOR_KEY"
+	OldMerchantKey = "OLD_MERCHANT_KEY"
 )
 
 // MetaModel 元模型
 type MetaModel struct {
 	// 命名空间 (例如：集团名）
 	Namespace string `json:"namespace" bson:"namespace"`
+	// OldMerchantID 原商户号 （例如：主要是应对数据迁移）
+	OldMerchantID string `json:"old_merchant_id" bson:"old_merchant_id"`
 	// 商户号 （例如：组织，分公司id）
 	MerchantID string `json:"merchant_id" bson:"merchant_id"`
 	// 创建者 （具体的数据创建人） updater
@@ -116,6 +119,27 @@ func (m *Model) GetMeta() MetaModel {
 	return m.Meta
 }
 
+// GetUpdateMeta 更新基础数据
+func (m *Model) GetUpdateMeta() MetaModel {
+	// 更新时间
+	m.Meta.UpdatedTime = r3time.CurrentTimestamp()
+	// 更新时间
+	m.Meta.UpdatedAt = r3time.CurrentTime()
+	// 命名空间
+	m.Meta.Namespace = GetValueFromCtx(m.Context.Context, NamespaceKey)
+	// 商户
+	m.Meta.MerchantID = GetValueFromCtx(m.Context.Context, MerchantKey)
+	// 数据操作所属人
+	m.Meta.AccountID = GetValueFromCtx(m.Context.Context, AccountKey)
+	// 创建人
+	m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
+	// 更新人
+	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
+	// 旧商户
+	m.Meta.OldMerchantID = GetValueFromCtx(m.Context.Context, OldMerchantKey)
+	return m.Meta
+}
+
 // Create 创建
 func (m *Model) Create(d interface{}) (string, error) {
 	m.Meta = m.GetMeta()
@@ -183,35 +207,13 @@ func (m *Model) Update(d interface{}, id string) error {
 	coll := m.Context.Handler.Collection(m.Context.Collection)
 	objID, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.D{bson.E{Key: "_id", Value: objID}}
-	// 更新人
-	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
-	// 更新时间
-	m.Meta.UpdatedTime = time.Now().Unix()
-	// 更新时间
-	m.Meta.UpdatedAt = r3time.CurrentTime()
-
+	m.Meta = m.GetUpdateMeta()
 	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{bson.E{Key: "$set", Value: d}})
 	if err != nil {
 		return err
 	}
 
 	if result.MatchedCount < 1 {
-		return err
-	}
-
-	updatePayload := bson.M{
-		"$set": bson.M{
-			"meta.updater":      GetValueFromCtx(m.Context.Context, OperatorKey), // 要更新的字段及其值
-			"meta.updated_at":   r3time.CurrentTime(),                            // 要更新的字段及其值
-			"meta.updated_time": r3time.CurrentTimestamp(),                       // 要更新的字段及其值
-		},
-	}
-
-	result2, err := coll.UpdateOne(m.Context.Context, filter, updatePayload)
-	if err != nil {
-		return err
-	}
-	if result2.MatchedCount < 1 {
 		return err
 	}
 	return nil
