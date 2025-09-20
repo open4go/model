@@ -375,3 +375,28 @@ func (m *Model) UpdateMany(filter interface{}, updateData interface{}) error {
 
 	return nil
 }
+
+// Transfer 数据转移
+// Transfer	GET http://my.api.url/put/123
+func (m *Model) Transfer(d interface{}, id string, merchantId string) error {
+	coll := m.Context.Handler.Collection(m.Context.Collection)
+	objID, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.D{bson.E{Key: "_id", Value: objID}}
+	err := coll.FindOne(m.Context.Context, filter).Decode(d)
+	if err != nil {
+		return err
+	}
+	// 操作更新
+	m.Meta = m.GetUpdateMeta()
+	// 更新需求商户信息
+	m.Meta.MerchantID = merchantId
+	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{bson.E{Key: "$set", Value: d}})
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount < 1 {
+		return err
+	}
+	return nil
+}
