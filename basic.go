@@ -392,10 +392,7 @@ func (m *Model) Transfer(d interface{}, id string, merchantId string) error {
 	m.Meta.MerchantID = merchantId
 	result, err := coll.UpdateOne(m.Context.Context, filter, bson.D{bson.E{Key: "$set", Value: d}})
 	if err != nil {
-		return err
-	}
-
-	if result.MatchedCount < 1 {
+		log.Log(m.Context.Context).WithField("result", result).Error(err)
 		return err
 	}
 	return nil
