@@ -1,8 +1,6 @@
 module github.com/open4go/model
 
-go 1.22
-
-toolchain go1.22.3
+go 1.24.0
 
 require (
 	github.com/open4go/log v0.0.16
