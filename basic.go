@@ -119,24 +119,28 @@ func (m *Model) GetMeta() MetaModel {
 	return m.Meta
 }
 
-// GetUpdateMeta 更新基础数据
+// updateIfNotEmpty 仅当 newVal 非空时更新
+func updateIfNotEmpty(target *string, newVal string) {
+	if newVal != "" {
+		*target = newVal
+	}
+}
+
+// GetUpdateMeta 更新基础元数据（仅更新 context 有值的字段）
 func (m *Model) GetUpdateMeta() MetaModel {
+
 	// 更新时间
 	m.Meta.UpdatedTime = r3time.CurrentTimestamp()
-	// 更新时间
 	m.Meta.UpdatedAt = r3time.CurrentTime()
-	// 命名空间
-	m.Meta.Namespace = GetValueFromCtx(m.Context.Context, NamespaceKey)
-	// 商户
-	m.Meta.MerchantID = GetValueFromCtx(m.Context.Context, MerchantKey)
-	// 数据操作所属人
-	m.Meta.AccountID = GetValueFromCtx(m.Context.Context, AccountKey)
-	// 创建人
-	m.Meta.Founder = GetValueFromCtx(m.Context.Context, OperatorKey)
-	// 更新人
-	m.Meta.Updater = GetValueFromCtx(m.Context.Context, OperatorKey)
-	// 旧商户
-	m.Meta.OldMerchantID = GetValueFromCtx(m.Context.Context, OldMerchantKey)
+
+	// 仅当 context 中取到值时才更新
+	updateIfNotEmpty(&m.Meta.Namespace, GetValueFromCtx(m.Context.Context, NamespaceKey))
+	updateIfNotEmpty(&m.Meta.MerchantID, GetValueFromCtx(m.Context.Context, MerchantKey))
+	updateIfNotEmpty(&m.Meta.OldMerchantID, GetValueFromCtx(m.Context.Context, OldMerchantKey))
+	updateIfNotEmpty(&m.Meta.AccountID, GetValueFromCtx(m.Context.Context, AccountKey))
+	updateIfNotEmpty(&m.Meta.Founder, GetValueFromCtx(m.Context.Context, OperatorKey))
+	updateIfNotEmpty(&m.Meta.Updater, GetValueFromCtx(m.Context.Context, OperatorKey))
+
 	return m.Meta
 }
 
