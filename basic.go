@@ -290,7 +290,7 @@ func (m *Model) GetListWithOpt(filter interface{}, d interface{}, opt *options.F
 	// 声明需要返回的列表
 	//results := make([]*Model, 0)
 	// 获取总数（含过滤规则）
-	totalCounter, err := coll.CountDocuments(context.TODO(), filter)
+	totalCounter, err := coll.CountDocuments(m.Context.Context, filter)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return 0, err
 	}
